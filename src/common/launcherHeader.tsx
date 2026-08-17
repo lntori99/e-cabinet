@@ -17,7 +17,7 @@ export default function LauncherHeader({
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/90">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <Logo href="/welcome" />
 
         <div className="flex items-center gap-3">
