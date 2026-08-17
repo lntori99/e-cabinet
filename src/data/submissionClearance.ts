@@ -1,0 +1,542 @@
+import type {
+  ClearanceDelegation,
+  ClearancePath,
+  ClearanceStageName,
+  PaperTemplate,
+  Submission,
+} from "@/models/response/base-response";
+
+/**
+ * FR SUB configuration and seed state.
+ *
+ * Clearance paths, templates and service times are configuration an
+ * administrator edits — they are not code, and the workflow reads them rather
+ * than hard-coding a route through the stages.
+ */
+
+/** FR-SUB-07 — the five stages, in the order the proposal sets out. */
+export const CLEARANCE_STAGES: ClearanceStageName[] = [
+  "Policy Review",
+  "Legal Clearance",
+  "Financial Clearance",
+  "Administrative Clearance",
+  "Final Approval",
+];
+
+/** The threshold above which financial clearance becomes mandatory. */
+export const FINANCIAL_THRESHOLD_MWK = 500_000_000;
+
+/** FR-SUB-02 */
+export const PAPER_TEMPLATES: PaperTemplate[] = [
+  {
+    id: "TPL-POLICY",
+    name: "Cabinet Policy Paper",
+    appliesTo: "Policy papers and decision items",
+    requiredSections: [
+      "Subject and decision sought",
+      "Background",
+      "Policy options considered",
+      "Financial implications",
+      "Legal implications",
+      "Recommendation",
+    ],
+    maxPages: 12,
+    version: "3.1",
+    updatedAt: "2026-04-02",
+  },
+  {
+    id: "TPL-INFO",
+    name: "Information Note",
+    appliesTo: "Information items requiring no decision",
+    requiredSections: ["Subject", "Summary", "Position", "Action requested"],
+    maxPages: 4,
+    version: "2.0",
+    updatedAt: "2026-01-19",
+  },
+  {
+    id: "TPL-BILL",
+    name: "Draft Bill Submission",
+    appliesTo: "Legislation and statutory instruments",
+    requiredSections: [
+      "Subject and decision sought",
+      "Policy authority",
+      "Clause-by-clause note",
+      "Legal implications",
+      "Consultation record",
+      "Recommendation",
+    ],
+    maxPages: 20,
+    version: "1.4",
+    updatedAt: "2026-05-28",
+  },
+  {
+    id: "TPL-EMERGENCY",
+    name: "Emergency Submission",
+    appliesTo: "Emergency sessions convened at short notice",
+    requiredSections: ["Subject and decision sought", "Situation", "Recommendation"],
+    maxPages: 3,
+    version: "1.0",
+    updatedAt: "2026-02-11",
+  },
+];
+
+export function paperTemplate(id: string): PaperTemplate {
+  return PAPER_TEMPLATES.find((t) => t.id === id) ?? PAPER_TEMPLATES[0];
+}
+
+/** FR-SUB-07 / 08 */
+export const CLEARANCE_PATHS: ClearancePath[] = [
+  {
+    id: "PATH-STANDARD",
+    name: "Standard Cabinet paper",
+    appliesWhen: "Policy papers and decision items for Full Cabinet",
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", serviceHours: 24 },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", serviceHours: 48 },
+      {
+        stage: "Financial Clearance",
+        mode: "Conditional",
+        mandatory: true,
+        actorRole: "Secretary to Treasury",
+        serviceHours: 24,
+        condition: "Financial implication above MWK 500,000,000",
+      },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", serviceHours: 24 },
+    ],
+  },
+  {
+    id: "PATH-LEGISLATION",
+    name: "Legislation",
+    appliesWhen: "Draft bills and statutory instruments",
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", serviceHours: 24 },
+      { stage: "Legal Clearance", mode: "Sequential", mandatory: true, actorRole: "Attorney General's Chambers", serviceHours: 72 },
+      {
+        stage: "Financial Clearance",
+        mode: "Conditional",
+        mandatory: false,
+        actorRole: "Secretary to Treasury",
+        serviceHours: 24,
+        condition: "Only where the Bill carries a financial implication",
+      },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", serviceHours: 24 },
+    ],
+  },
+  {
+    id: "PATH-INFO",
+    name: "Information note",
+    appliesWhen: "Information items requiring no Cabinet decision",
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", serviceHours: 12 },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", serviceHours: 12 },
+    ],
+  },
+  {
+    id: "PATH-EMERGENCY",
+    name: "Emergency session",
+    appliesWhen: "Papers for an emergency session",
+    stages: [
+      { stage: "Policy Review", mode: "Parallel", mandatory: true, actorRole: "Policy Review Officer", serviceHours: 4 },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", serviceHours: 4 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", serviceHours: 4 },
+    ],
+  },
+];
+
+export function clearancePath(id: string): ClearancePath {
+  return CLEARANCE_PATHS.find((p) => p.id === id) ?? CLEARANCE_PATHS[0];
+}
+
+/** FR-SUB-12 */
+export const seedClearanceDelegations: ClearanceDelegation[] = [
+  {
+    id: "CDL-014",
+    stage: "Legal Clearance",
+    fromRole: "Attorney General's Chambers",
+    fromPerson: "Attorney General",
+    toPerson: "Solicitor General",
+    startsAt: "2026-08-10",
+    endsAt: "2026-08-24",
+    approvedBy: "Secretary to Cabinet",
+    reason: "Attorney General on SADC legal mission",
+    status: "Active",
+  },
+  {
+    id: "CDL-013",
+    stage: "Financial Clearance",
+    fromRole: "Secretary to Treasury",
+    fromPerson: "Secretary to Treasury",
+    toPerson: "Director of Budget",
+    startsAt: "2026-08-13",
+    endsAt: "2026-08-15",
+    approvedBy: "Secretary to Cabinet",
+    reason: "Two-day absence for the regional budget forum",
+    status: "Active",
+  },
+  {
+    id: "CDL-011",
+    stage: "Policy Review",
+    fromRole: "Policy Review Officer",
+    fromPerson: "Principal Policy Officer",
+    toPerson: "Deputy Policy Officer",
+    startsAt: "2026-07-01",
+    endsAt: "2026-07-21",
+    approvedBy: "Chief Secretary",
+    reason: "Annual leave",
+    status: "Expired",
+  },
+];
+
+/* --------------------------------- Papers -------------------------------- */
+
+/**
+ * Nine submissions, chosen so every state the workflow can reach is present:
+ * in clearance and on time, past its service time, returned for amendment,
+ * quarantined, late and unauthorised, cleared by exception, and rejected.
+ */
+export const seedSubmissions: Submission[] = [
+  {
+    id: "SUB-2026-041",
+    title: "National Fibre Backbone Phase III Financing Options",
+    templateId: "TPL-POLICY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Finance & Economic Affairs",
+      responsibleOfficer: "P. Mwale",
+      subject: "Financing options for Phase III of the national fibre backbone",
+      meetingId: "MTG-2026-014",
+      agendaItemTitle: "National Fibre Backbone Phase III Financing",
+      classification: "TOP SECRET — CABINET",
+      decisionSought: "Approval of the concessional financing package",
+      financialImplication: "MWK 812,400,000 over three financial years",
+      financialAmountMwk: 812_400_000,
+      legalImplication: "Requires a guarantee under the Public Finance Management Act",
+    },
+    status: "In clearance",
+    createdAt: "2026-08-05T09:10",
+    submittedAt: "2026-08-08T11:20",
+    submittedBy: "P. Mwale",
+    deadline: "2026-08-12T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "Approved", serviceHours: 24, startedAt: "2026-08-08T11:20", dueAt: "2026-08-09T11:20", decidedAt: "2026-08-09T08:40" },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", actor: "Solicitor General", status: "Approved", serviceHours: 48, startedAt: "2026-08-09T08:40", dueAt: "2026-08-11T08:40", decidedAt: "2026-08-10T16:05" },
+      { stage: "Financial Clearance", mode: "Conditional", mandatory: true, actorRole: "Secretary to Treasury", actor: "Director of Budget", status: "In progress", serviceHours: 24, startedAt: "2026-08-12T09:00", dueAt: "2026-08-13T09:00", condition: "Financial implication above MWK 500,000,000" },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", status: "Not started", serviceHours: 24 },
+    ],
+    comments: [
+      { id: "CC-041-1", at: "2026-08-09T08:40", by: "Principal Policy Officer", role: "Policy Review Officer", stage: "Policy Review", decision: "Approved", body: "Options are well framed and consistent with the Digital Economy Strategy. Proceed." },
+      { id: "CC-041-2", at: "2026-08-10T16:05", by: "Solicitor General", role: "Attorney General's Chambers", stage: "Legal Clearance", decision: "Approved", body: "The guarantee is within the Minister's powers. Annex B should cite section 42 rather than section 41 — corrected at annex level, no re-submission required." },
+    ],
+    versions: [
+      { version: 1, uploadedBy: "P. Mwale", uploadedAt: "2026-08-08T11:20", note: "Initial submission" },
+      { version: 2, uploadedBy: "P. Mwale", uploadedAt: "2026-08-11T14:02", note: "Annex B citation corrected" },
+    ],
+    files: [
+      { id: "F-041-1", kind: "Paper", fileName: "fibre-phase-iii-financing.pdf", sizeMb: 2.4, scan: "Clean" },
+      { id: "F-041-2", kind: "Annex", fileName: "annex-a-cost-model.xlsx", sizeMb: 1.1, scan: "Clean" },
+      { id: "F-041-3", kind: "Presentation", fileName: "fibre-rollout-deck.pdf", sizeMb: 5.8, scan: "Clean" },
+    ],
+  },
+  {
+    id: "SUB-2026-042",
+    title: "Data Protection (Amendment) Bill, 2026",
+    templateId: "TPL-BILL",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Justice",
+      responsibleOfficer: "L. Banda",
+      subject: "Amendments to the Data Protection Act to align with the SADC model law",
+      meetingId: "MTG-2026-014",
+      agendaItemTitle: "Data Protection (Amendment) Bill, 2026",
+      classification: "SECRET",
+      decisionSought: "Approval to table the Bill in the National Assembly",
+      financialImplication: "MWK 41,000,000 for the supervisory authority's first year",
+      financialAmountMwk: 41_000_000,
+      legalImplication: "Amends the Data Protection Act, 2024; consequential to the Communications Act",
+    },
+    status: "Returned for amendment",
+    createdAt: "2026-08-04T15:00",
+    submittedAt: "2026-08-07T09:45",
+    submittedBy: "L. Banda",
+    deadline: "2026-08-12T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "Approved", serviceHours: 24, startedAt: "2026-08-07T09:45", dueAt: "2026-08-08T09:45", decidedAt: "2026-08-07T16:30" },
+      { stage: "Legal Clearance", mode: "Sequential", mandatory: true, actorRole: "Attorney General's Chambers", actor: "Solicitor General", status: "Returned", serviceHours: 72, startedAt: "2026-08-07T16:30", dueAt: "2026-08-10T16:30", decidedAt: "2026-08-10T11:15" },
+      { stage: "Financial Clearance", mode: "Conditional", mandatory: false, actorRole: "Secretary to Treasury", status: "Not applicable", serviceHours: 24, condition: "Below the MWK 500,000,000 threshold" },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", status: "Not started", serviceHours: 24 },
+    ],
+    comments: [
+      { id: "CC-042-1", at: "2026-08-07T16:30", by: "Principal Policy Officer", role: "Policy Review Officer", stage: "Policy Review", decision: "Approved", body: "Policy authority is established by the 2025 Cabinet decision. No policy objection." },
+      { id: "CC-042-2", at: "2026-08-10T11:15", by: "Solicitor General", role: "Attorney General's Chambers", stage: "Legal Clearance", decision: "Returned for amendment", body: "Clause 14 conflicts with section 9 of the Communications Act — cross-border transfer would be governed twice, on different tests. Please redraft clause 14 and add a consequential amendment schedule, then resubmit." },
+      { id: "CC-042-3", at: "2026-08-11T08:05", by: "L. Banda", role: "Ministry Submitter", stage: "Legal Clearance", body: "Understood. Drafting instructions have gone to Legislative Counsel; the schedule should be ready by 15 August.", replyToId: "CC-042-2" },
+    ],
+    versions: [
+      { version: 1, uploadedBy: "L. Banda", uploadedAt: "2026-08-07T09:45", note: "Initial submission" },
+    ],
+    files: [
+      { id: "F-042-1", kind: "Paper", fileName: "data-protection-amendment-bill.pdf", sizeMb: 3.2, scan: "Clean" },
+      { id: "F-042-2", kind: "Secretariat Note", fileName: "drafting-note.pdf", sizeMb: 0.4, scan: "Clean" },
+    ],
+  },
+  {
+    id: "SUB-2026-043",
+    title: "District Hospital Equipment Procurement",
+    templateId: "TPL-POLICY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Health",
+      responsibleOfficer: "Director of Planning, Health",
+      subject: "Procurement plan for district hospital diagnostic equipment",
+      meetingId: "MTG-2026-014",
+      agendaItemTitle: "District Hospital Equipment Procurement",
+      classification: "SECRET",
+      decisionSought: "Approval of the procurement plan and the financing envelope",
+      financialImplication: "MWK 640,000,000 in the current financial year",
+      financialAmountMwk: 640_000_000,
+      legalImplication: "Procurement under the Public Procurement and Disposal of Assets Act",
+    },
+    status: "Cleared",
+    createdAt: "2026-08-03T08:00",
+    submittedAt: "2026-08-05T10:00",
+    submittedBy: "Director of Planning, Health",
+    deadline: "2026-08-12T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "Approved", serviceHours: 24, startedAt: "2026-08-05T10:00", dueAt: "2026-08-06T10:00", decidedAt: "2026-08-05T15:20" },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", actor: "Solicitor General", status: "Approved", serviceHours: 48, startedAt: "2026-08-05T15:20", dueAt: "2026-08-07T15:20", decidedAt: "2026-08-06T09:10" },
+      { stage: "Financial Clearance", mode: "Conditional", mandatory: true, actorRole: "Secretary to Treasury", actor: "Secretary to Treasury", status: "Approved", serviceHours: 24, startedAt: "2026-08-06T09:10", dueAt: "2026-08-07T09:10", decidedAt: "2026-08-06T17:45", condition: "Financial implication above MWK 500,000,000" },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", actor: "Chief Secretary", status: "Approved", serviceHours: 12, startedAt: "2026-08-06T17:45", dueAt: "2026-08-07T05:45", decidedAt: "2026-08-07T08:15" },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", actor: "Secretary to Cabinet", status: "Approved", serviceHours: 24, startedAt: "2026-08-07T08:15", dueAt: "2026-08-08T08:15", decidedAt: "2026-08-07T14:30" },
+    ],
+    comments: [
+      { id: "CC-043-1", at: "2026-08-06T17:45", by: "Secretary to Treasury", role: "Secretary to Treasury", stage: "Financial Clearance", decision: "Approved", body: "Provision exists in the approved ceiling. Cleared on condition the phasing in annex C is held to." },
+      { id: "CC-043-2", at: "2026-08-07T14:30", by: "Secretary to Cabinet", role: "Secretary to Cabinet", stage: "Final Approval", decision: "Approved", body: "Cleared for the 14th Ordinary Sitting." },
+    ],
+    versions: [{ version: 1, uploadedBy: "Director of Planning, Health", uploadedAt: "2026-08-05T10:00", note: "Initial submission" }],
+    files: [
+      { id: "F-043-1", kind: "Paper", fileName: "district-hospital-procurement.pdf", sizeMb: 1.9, scan: "Clean" },
+      { id: "F-043-2", kind: "Annex", fileName: "annex-c-phasing.xlsx", sizeMb: 0.6, scan: "Clean" },
+    ],
+  },
+  {
+    id: "SUB-2026-044",
+    title: "Mid-Year Budget Performance Review",
+    templateId: "TPL-POLICY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Finance & Economic Affairs",
+      responsibleOfficer: "P. Mwale",
+      subject: "Performance against the approved budget at the mid-year point",
+      meetingId: "MTG-2026-015",
+      agendaItemTitle: "Mid-Year Budget Performance Review",
+      classification: "SECRET",
+      decisionSought: "Noting, and approval of the proposed reallocations",
+      financialImplication: "Reallocation of MWK 1,240,000,000 between votes",
+      financialAmountMwk: 1_240_000_000,
+      legalImplication: "Reallocation within the Minister's powers under section 21",
+    },
+    status: "In clearance",
+    createdAt: "2026-08-10T10:00",
+    submittedAt: "2026-08-13T09:15",
+    submittedBy: "P. Mwale",
+    deadline: "2026-08-17T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "In progress", serviceHours: 24, startedAt: "2026-08-13T09:15", dueAt: "2026-08-14T09:15" },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", status: "Not started", serviceHours: 48 },
+      { stage: "Financial Clearance", mode: "Conditional", mandatory: true, actorRole: "Secretary to Treasury", status: "Not started", serviceHours: 24, condition: "Financial implication above MWK 500,000,000" },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", status: "Not started", serviceHours: 24 },
+    ],
+    comments: [],
+    versions: [{ version: 1, uploadedBy: "P. Mwale", uploadedAt: "2026-08-13T09:15", note: "Initial submission" }],
+    files: [{ id: "F-044-1", kind: "Paper", fileName: "mid-year-budget-review.pdf", sizeMb: 4.1, scan: "Clean" }],
+  },
+  {
+    id: "SUB-2026-045",
+    title: "Regional Diplomatic Positions — SADC Summit",
+    templateId: "TPL-INFO",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Foreign Affairs",
+      responsibleOfficer: "C. Gondwe",
+      subject: "Malawi's positions ahead of the SADC Summit",
+      meetingId: "MTG-2026-014",
+      agendaItemTitle: "Regional Diplomatic Positions — SADC Summit",
+      classification: "TOP SECRET — CABINET",
+      decisionSought: "Noting of the negotiating positions",
+      financialImplication: "None",
+      financialAmountMwk: 0,
+      legalImplication: "None",
+    },
+    status: "Quarantined",
+    createdAt: "2026-08-11T14:20",
+    submittedAt: "2026-08-11T14:32",
+    submittedBy: "C. Gondwe",
+    deadline: "2026-08-12T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", status: "Not started", serviceHours: 12 },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+    ],
+    comments: [
+      { id: "CC-045-1", at: "2026-08-11T14:33", by: "Platform", role: "System", stage: "Submission", body: "Upload held at the perimeter: sadc-positions-brief.docm carries an embedded macro. The submission cannot enter clearance until a clean file is supplied." },
+    ],
+    versions: [{ version: 1, uploadedBy: "C. Gondwe", uploadedAt: "2026-08-11T14:32", note: "Initial submission" }],
+    files: [
+      { id: "F-045-1", kind: "Paper", fileName: "sadc-positions-brief.docm", sizeMb: 0.9, scan: "Quarantined", quarantineReason: "Macro-enabled document — file type not permitted, and the macro failed malware scanning" },
+      { id: "F-045-2", kind: "Annex", fileName: "summit-agenda.pdf", sizeMb: 0.3, scan: "Clean" },
+    ],
+  },
+  {
+    id: "SUB-2026-046",
+    title: "Teacher Deployment Framework Review",
+    templateId: "TPL-POLICY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Education",
+      responsibleOfficer: "J. Tembo",
+      subject: "Review of the teacher deployment framework for the 2027 intake",
+      meetingId: "MTG-2026-014",
+      agendaItemTitle: "Teacher Deployment Framework Review",
+      classification: "CONFIDENTIAL",
+      decisionSought: "Approval of the revised deployment formula",
+      financialImplication: "MWK 96,000,000 in transfer allowances",
+      financialAmountMwk: 96_000_000,
+      legalImplication: "Consequential amendments to the Teaching Service regulations",
+    },
+    status: "Awaiting late authorisation",
+    createdAt: "2026-08-13T16:40",
+    submittedAt: "2026-08-13T18:12",
+    submittedBy: "J. Tembo",
+    deadline: "2026-08-12T17:00",
+    late: true,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", status: "Not started", serviceHours: 24 },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", status: "Not started", serviceHours: 48 },
+      { stage: "Financial Clearance", mode: "Conditional", mandatory: false, actorRole: "Secretary to Treasury", status: "Not applicable", serviceHours: 24, condition: "Below the MWK 500,000,000 threshold" },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", status: "Not started", serviceHours: 24 },
+    ],
+    comments: [
+      { id: "CC-046-1", at: "2026-08-13T18:12", by: "J. Tembo", role: "Ministry Submitter", stage: "Submission", body: "Submitted after the deadline. The formula could not be finalised until the enrolment census returned on 13 August; the item was carried from the 13th Sitting and is expected." },
+    ],
+    versions: [{ version: 1, uploadedBy: "J. Tembo", uploadedAt: "2026-08-13T18:12", note: "Initial submission" }],
+    files: [{ id: "F-046-1", kind: "Paper", fileName: "teacher-deployment-review.pdf", sizeMb: 2.2, scan: "Clean" }],
+  },
+  {
+    id: "SUB-2026-047",
+    title: "Public Debt Sustainability Outlook",
+    templateId: "TPL-POLICY",
+    templateIssues: [
+      "Financial implications section is empty",
+      "Recommendation section is missing",
+      "Paper runs to 17 pages against a 12-page limit",
+    ],
+    metadata: {
+      originatingMinistry: "Finance & Economic Affairs",
+      responsibleOfficer: "P. Mwale",
+      subject: "Debt sustainability outlook to 2030",
+      meetingId: "MTG-2026-015",
+      agendaItemTitle: "",
+      classification: "SECRET",
+      decisionSought: "",
+      financialImplication: "",
+      financialAmountMwk: 0,
+      legalImplication: "",
+    },
+    status: "Draft",
+    createdAt: "2026-08-12T11:05",
+    submittedBy: "P. Mwale",
+    deadline: "2026-08-17T17:00",
+    late: false,
+    stages: [],
+    comments: [],
+    versions: [{ version: 1, uploadedBy: "P. Mwale", uploadedAt: "2026-08-12T11:05", note: "Working draft" }],
+    files: [{ id: "F-047-1", kind: "Paper", fileName: "debt-sustainability-outlook.docx", sizeMb: 1.4, scan: "Clean" }],
+  },
+  {
+    id: "SUB-2026-048",
+    title: "Emergency Drought Response — Southern Region",
+    templateId: "TPL-EMERGENCY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Agriculture",
+      responsibleOfficer: "Secretary for Agriculture",
+      subject: "Immediate relief measures for the southern region drought",
+      meetingId: "MTG-2026-016",
+      agendaItemTitle: "Emergency Drought Response",
+      classification: "CONFIDENTIAL",
+      decisionSought: "Authority to release the strategic grain reserve",
+      financialImplication: "MWK 2,100,000,000 from the contingency vote",
+      financialAmountMwk: 2_100_000_000,
+      legalImplication: "Release under the Disaster Preparedness and Relief Act",
+    },
+    status: "Cleared",
+    createdAt: "2026-08-09T06:30",
+    submittedAt: "2026-08-09T07:15",
+    submittedBy: "Secretary for Agriculture",
+    deadline: "2026-08-22T12:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Parallel", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "Approved", serviceHours: 4, startedAt: "2026-08-09T07:15", dueAt: "2026-08-09T11:15", decidedAt: "2026-08-09T09:40" },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", status: "Skipped by exception", serviceHours: 4 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", actor: "Secretary to Cabinet", status: "Approved", serviceHours: 4, startedAt: "2026-08-09T09:40", dueAt: "2026-08-09T13:40", decidedAt: "2026-08-09T10:20" },
+    ],
+    comments: [
+      { id: "CC-048-1", at: "2026-08-09T09:40", by: "Principal Policy Officer", role: "Policy Review Officer", stage: "Policy Review", decision: "Approved", body: "Relief measures are proportionate to the declared emergency." },
+      { id: "CC-048-2", at: "2026-08-09T10:20", by: "Secretary to Cabinet", role: "Secretary to Cabinet", stage: "Final Approval", decision: "Approved", body: "Cleared under emergency authority. Legal clearance to follow within seven days." },
+    ],
+    versions: [{ version: 1, uploadedBy: "Secretary for Agriculture", uploadedAt: "2026-08-09T07:15", note: "Initial submission" }],
+    files: [{ id: "F-048-1", kind: "Paper", fileName: "drought-response.pdf", sizeMb: 0.8, scan: "Clean" }],
+    exception: {
+      authorisedBy: "Secretary to Cabinet",
+      reference: "OPC/SEC/2026/121",
+      at: "2026-08-09T09:55",
+      reason:
+        "Declared emergency under the Disaster Preparedness and Relief Act. Legal clearance is to be completed retrospectively within seven days.",
+      stagesSkipped: ["Legal Clearance"],
+    },
+  },
+  {
+    id: "SUB-2026-049",
+    title: "e-Government Shared Services Consolidation",
+    templateId: "TPL-POLICY",
+    templateIssues: [],
+    metadata: {
+      originatingMinistry: "Information & Communications Technology",
+      responsibleOfficer: "Director of e-Government",
+      subject: "Consolidation of ministry shared services onto the government cloud",
+      meetingId: "MTG-2026-015",
+      agendaItemTitle: "e-Government Shared Services",
+      classification: "RESTRICTED",
+      decisionSought: "Approval of the consolidation roadmap",
+      financialImplication: "MWK 380,000,000 over two years",
+      financialAmountMwk: 380_000_000,
+      legalImplication: "Data sharing requires Data Protection Authority consultation",
+    },
+    status: "Rejected",
+    createdAt: "2026-08-06T13:00",
+    submittedAt: "2026-08-08T08:30",
+    submittedBy: "Director of e-Government",
+    deadline: "2026-08-17T17:00",
+    late: false,
+    stages: [
+      { stage: "Policy Review", mode: "Sequential", mandatory: true, actorRole: "Policy Review Officer", actor: "Principal Policy Officer", status: "Rejected", serviceHours: 24, startedAt: "2026-08-08T08:30", dueAt: "2026-08-09T08:30", decidedAt: "2026-08-08T15:50" },
+      { stage: "Legal Clearance", mode: "Parallel", mandatory: true, actorRole: "Attorney General's Chambers", status: "Not started", serviceHours: 48 },
+      { stage: "Administrative Clearance", mode: "Sequential", mandatory: true, actorRole: "Chief Secretary", status: "Not started", serviceHours: 12 },
+      { stage: "Final Approval", mode: "Sequential", mandatory: true, actorRole: "Secretary to Cabinet", status: "Not started", serviceHours: 24 },
+    ],
+    comments: [
+      { id: "CC-049-1", at: "2026-08-08T15:50", by: "Principal Policy Officer", role: "Policy Review Officer", stage: "Policy Review", decision: "Rejected", body: "The roadmap pre-empts the Data Protection Authority consultation the paper itself identifies as necessary. Bring this back once that consultation has concluded — it is not a drafting fix." },
+    ],
+    versions: [{ version: 1, uploadedBy: "Director of e-Government", uploadedAt: "2026-08-08T08:30", note: "Initial submission" }],
+    files: [{ id: "F-049-1", kind: "Paper", fileName: "shared-services-consolidation.pdf", sizeMb: 3.6, scan: "Clean" }],
+  },
+];

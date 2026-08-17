@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  /* State green — sovereign accent drawn from the Malawi flag */
+  --color-state-50: #ecf8f1;
+  --color-state-100: #d2eede;
+  --color-state-200: #a6ddbf;
+  --color-state-300: #6fc59a;
+  --color-state-400: #3ba876;
+  --color-state-500: #1f8a5c;
+  --color-state-600: #177245;
+  --color-state-700: #135c39;
+  --color-state-800: #114a30;
+  --color-state-900: #0e3d29;
+  --color-state-950: #062317;
+
+  /* Seal red — used only for classification stamps & alerts */
+  --color-seal-500: #b3372c;
+  --color-seal-600: #96291f;
+
+  /* Signal amber — pending / warning status */
+  --color-signal-400: #e2a334;
+  --color-signal-500: #c78a1d;
+
+  /* One typeface throughout: Inter. `font-mono` is kept as a separate token —
+     it no longer means "monospaced", it means the small uppercase label style
+     this console uses for IDs, timestamps and register columns, and it carries
+     tabular figures so those columns still line up. */
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-inter), system-ui, sans-serif;
+  --font-mono--font-feature-settings: "tnum", "cv05";
+}
+
+:root {
+  --surface: #fafaf9;
+  --surface-raised: #ffffff;
+  --ink: #1c1917;
+  color-scheme: light;
+
+  /* Chart palette. Each mode is stepped for its own surface — the dark values
+     are not an automatic flip of the light ones. Validated as a set for the
+     lightness band, chroma floor, colour-vision separation and contrast, so
+     changing a value here means re-validating the whole ramp. Series 1–5 carry
+     identity (never meaning); the four status steps are reserved for state and
+     always ship with a label beside them. */
+  --viz-surface: #ffffff;
+  --viz-grid: #e5e5e5;
+  --viz-axis: #a3a3a3;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+
+  /* Ordinal ramp — one hue in monotone steps, for scales where the order is
+     the meaning (weakest → strongest). Never for identity. */
+  --viz-ramp-1: #6fc59a;
+  --viz-ramp-2: #3ba876;
+  --viz-ramp-3: #1f8a5c;
+  --viz-ramp-4: #177245;
+  --viz-ramp-5: #135c39;
+}
+
+.dark {
+  --surface: #0a0a0a;
+  --surface-raised: #141414;
+  --ink: #f5f5f4;
+  color-scheme: dark;
+
+  --viz-surface: #171717;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #898781;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+
+  /* Stepped for the dark surface, not flipped: the darkest step still has to
+     clear the card it sits on. */
+  --viz-ramp-1: #135c39;
+  --viz-ramp-2: #177245;
+  --viz-ramp-3: #1f8a5c;
+  --viz-ramp-4: #3ba876;
+  --viz-ramp-5: #6fc59a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Inter needs a touch more weight at the small uppercase sizes this console
+   leans on, and tabular figures everywhere numbers sit in a column. */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Classification stamp — the platform's signature label */
+.stamp {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  padding: 0.2rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 2px;
+}
+
+/* Register rows — dotted leaders like official gazettes */
+.register-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.register-row::before {
+  content: "";
+  order: 2;
+  flex: 1;
+  border-bottom: 1px dotted currentColor;
+  opacity: 0.3;
+  transform: translateY(-0.3em);
+}
+.register-row > :last-child { order: 3; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::selection {
+  background: #177245;
+  color: #fff;
+}
+
+*:focus-visible {
+  outline: 2px solid #1f8a5c;
+  outline-offset: 2px;
+}

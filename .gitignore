@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+
+# Secrets. `.env.example` documents the keys; the values stay local.
+.env
+.env.local
+.env*.local
+
+# Per-machine Claude Code settings. `.claude/settings.json` is shared.
+.claude/settings.local.json
+
+.DS_Store

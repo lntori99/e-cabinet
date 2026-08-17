@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(perl -pi -e 's{from \"\\\\./carryForwardModal\"}{from \"../../components/carryForwardModal\"}' agendaPanel.tsx)",
+      "Bash(perl -pi -e 's{from \"\\\\./disruptMeetingModal\"}{from \"../../components/disruptMeetingModal\"}' detailsPanel.tsx)",
+      "Bash(perl -pi -e 's{<ItemIdentity item=\\\\{item\\\\} from=\\\\{from\\\\} />}{<ItemIdentity item={item} />}g' src/app/meetings-agenda/carried-forward/components/carriedForwardBoard.tsx)",
+      "Bash(perl -pi -e 's{from \"\\\\.\\\\./\\\\.\\\\./overview/components/meetingRegister\"}{from \"../../components/meetingStatus\"}' src/app/meetings-agenda/calendar/components/meetingCalendar.tsx)",
+      "Bash(perl -pi -e 's{href=\"/meetings-agenda/overview\"}{href=\"/meetings-agenda/all-meetings\"}g' src/app/meetings-agenda/calendar/components/meetingCalendar.tsx)",
+      "Bash(node -e \"console.log\\('react', require\\('react/package.json'\\).version, '| react-is', \\(\\(\\)=>{try{return require\\('react-is/package.json'\\).version}catch\\(e\\){return 'n/a'}}\\)\\(\\), '| recharts', require\\('recharts/package.json'\\).version\\)\")",
+      "Bash(node -e \"const p=require\\('recharts/package.json'\\); console.log\\(JSON.stringify\\(p.peerDependencies\\), JSON.stringify\\(p.dependencies\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"overview:%{http_code}\\\\n\" --max-time 90 http://localhost:3001/meetings-agenda/overview)"
+    ]
+  }
+}
