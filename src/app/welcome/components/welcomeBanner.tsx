@@ -27,7 +27,7 @@ export default function WelcomeBanner() {
           </span>
 
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl xl:text-4xl">
-            Welcome back, {OPERATOR.name}!
+            Welcome, {OPERATOR.name}!
           </h1>
 
           <p className="mt-2 max-w-xl text-sm text-state-100 sm:text-base">
