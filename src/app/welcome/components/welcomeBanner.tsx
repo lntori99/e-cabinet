@@ -1,100 +1,158 @@
-import { FiGrid, FiLock, FiMapPin, FiServer, FiUser } from "react-icons/fi";
+import Link from "next/link";
+import { FiArrowRight, FiBell, FiCalendar } from "react-icons/fi";
 import { OPERATOR, SITE } from "@/core/app-constants";
+import { seedCentreItems } from "@/data/notifications";
 
 /**
- * The band above the launcher tiles.
+ * The banner above the launcher tiles.
  *
- * It carries the four things somebody signing in to a Cabinet system needs to
- * know before they touch anything: who the platform thinks they are, which
- * environment they have reached, that the session is a restricted one, and the
- * handling rule that applies to everything behind the tiles. A banner that only
- * said the product name would be decoration; this one is the first line of the
- * handling notice.
+ * The artwork is inline SVG rather than an image: it has to scale to any width,
+ * survive a build with no asset pipeline, and sit in a repository that ships no
+ * binaries. Blurred shapes over a gradient get close enough to a photographic
+ * wash and cost nothing to load.
  */
-export default function WelcomeBanner({
-  available,
-  total,
-}: {
-  available: number;
-  total: number;
-}) {
+export default function WelcomeBanner() {
+  // What is actually waiting on this officer, so the second action carries a
+  // real number rather than a decorative one.
+  const outstanding = seedCentreItems.filter((item) => !item.read).length;
+
   return (
-    <section
-      className="border-b border-state-800 bg-state-700 dark:border-state-900 dark:bg-state-800"
-      aria-labelledby="launcher-banner-title"
-    >
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-6">
-          <div className="min-w-0 max-w-2xl text-state-50">
-            <span className="inline-flex items-center gap-2 rounded-full border border-state-400/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-state-200">
-              <FiLock size={10} aria-hidden="true" />
-              Restricted — official use only
-            </span>
+    <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+      <section className="relative isolate overflow-hidden rounded-2xl">
+        <BannerArt />
 
-            <h1
-              id="launcher-banner-title"
-              className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl xl:text-4xl"
-            >
-              Welcome, {OPERATOR.name}
-            </h1>
+        <div className="relative px-6 py-10 sm:px-10 sm:py-12">
+          <span className="block text-3xl leading-none" aria-hidden="true">
+            👋
+          </span>
 
-            <p className="mt-2 text-sm text-state-100 sm:text-base">
-              {SITE.fullName}
-            </p>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl xl:text-4xl">
+            Welcome back, {OPERATOR.name}!
+          </h1>
 
-            <p className="mt-3 max-w-xl text-sm text-state-200">
-              Everything behind these tiles is Cabinet material. It is read
-              inside the platform, it is not carried out of it, and every act on
-              it is recorded against your name.
-            </p>
-          </div>
-
-          {/* The environment facts, set apart from the copy so they read as a
-              plate rather than as more prose. */}
-          <dl className="grid shrink-0 gap-x-8 gap-y-3 text-state-100 sm:grid-cols-2">
-            <Fact icon={FiUser} label="Signed in as" value={OPERATOR.role} />
-            <Fact
-              icon={FiServer}
-              label="Environment"
-              value={`${SITE.productionSite} production`}
-            />
-            <Fact icon={FiMapPin} label="Recovery site" value={SITE.drSite} />
-            <Fact
-              icon={FiGrid}
-              label="Functional areas"
-              value={`${available} of ${total} in this build`}
-            />
-          </dl>
-        </div>
-
-        <div className="mt-8 border-t border-state-600/70 pt-4 dark:border-state-700">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-state-300">
-            {SITE.owner} · delivered by {SITE.vendor}
+          <p className="mt-2 max-w-xl text-sm text-state-100 sm:text-base">
+            {OPERATOR.role} · {SITE.productionSite} production. Here is what is
+            waiting in your workspace.
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href="/meetings-agenda/overview"
+              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-state-800 shadow-sm transition hover:bg-state-50"
+            >
+              <FiCalendar size={15} aria-hidden="true" />
+              Meetings and agenda
+            </Link>
+
+            <Link
+              href="/notifications/centre"
+              className="inline-flex items-center gap-2 rounded-lg bg-state-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-state-400"
+            >
+              <FiBell size={15} aria-hidden="true" />
+              {outstanding > 0
+                ? `${outstanding} outstanding item${outstanding === 1 ? "" : "s"}`
+                : "Notification centre"}
+              <FiArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
-function Fact({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof FiLock;
-  label: string;
-  value: string;
-}) {
+/**
+ * The wash behind the banner.
+ *
+ * Three things have to read at once for this to look like flowing light rather
+ * than a flat fill: a near-black ground, a saturated core left of centre where
+ * the heading sits, and a pale band sweeping up to the right. The dark masses
+ * cut back into the band and give it the silhouette.
+ *
+ * Two blur levels rather than one — the wash wants to be formless, the band
+ * wants to keep its shape.
+ *
+ * `preserveAspectRatio="none"` distorts the shapes at extreme widths, which is
+ * fine: they are abstract, and the alternative is a gap at one edge.
+ */
+function BannerArt() {
   return (
-    <div className="min-w-0">
-      <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-state-300">
-        {label}
-      </dt>
-      <dd className="mt-1 inline-flex items-start gap-1.5 text-sm">
-        <Icon size={13} className="mt-0.5 shrink-0 text-state-300" aria-hidden="true" />
-        {value}
-      </dd>
-    </div>
+    <svg
+      className="absolute inset-0 -z-10 h-full w-full"
+      viewBox="0 0 1200 320"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="banner-ground" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#03130c" />
+          <stop offset="50%" stopColor="#062317" />
+          <stop offset="100%" stopColor="#010b07" />
+        </linearGradient>
+
+        <radialGradient id="banner-core" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#3ba876" stopOpacity="1" />
+          <stop offset="45%" stopColor="#1f8a5c" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#0e3d29" stopOpacity="0" />
+        </radialGradient>
+
+        <radialGradient id="banner-hot" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#6fc59a" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#3ba876" stopOpacity="0" />
+        </radialGradient>
+
+        <linearGradient id="banner-band" x1="0.1" y1="1" x2="0.9" y2="0">
+          <stop offset="0%" stopColor="#6fc59a" stopOpacity="0" />
+          <stop offset="35%" stopColor="#ecf8f1" stopOpacity="0.95" />
+          <stop offset="70%" stopColor="#a6ddbf" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#6fc59a" stopOpacity="0" />
+        </linearGradient>
+
+        <filter
+          id="banner-wash"
+          filterUnits="userSpaceOnUse"
+          x="-500"
+          y="-500"
+          width="2200"
+          height="1320"
+        >
+          <feGaussianBlur stdDeviation="52" />
+        </filter>
+
+        <filter
+          id="banner-edge"
+          filterUnits="userSpaceOnUse"
+          x="-500"
+          y="-500"
+          width="2200"
+          height="1320"
+        >
+          <feGaussianBlur stdDeviation="22" />
+        </filter>
+      </defs>
+
+      <rect width="1200" height="320" fill="url(#banner-ground)" />
+
+      {/* The formless part: a saturated core and a hotter spot inside it. */}
+      <g filter="url(#banner-wash)">
+        <ellipse cx="300" cy="190" rx="520" ry="330" fill="url(#banner-core)" />
+        <ellipse cx="470" cy="120" rx="230" ry="170" fill="url(#banner-hot)" />
+      </g>
+
+      {/* The band, blurred less so it keeps its sweep. */}
+      <g filter="url(#banner-edge)">
+        <path
+          d="M430 400 C 610 300, 740 160, 820 -60 L 1060 -60 C 960 180, 810 330, 650 430 Z"
+          fill="url(#banner-band)"
+        />
+      </g>
+
+      {/* The masses that cut back into it. Both sit low, so the band runs
+          clear to the top-right corner instead of being clipped by one. */}
+      <g filter="url(#banner-wash)">
+        <ellipse cx="1190" cy="330" rx="330" ry="215" fill="#010b07" />
+        <ellipse cx="830" cy="400" rx="270" ry="170" fill="#010b07" />
+      </g>
+    </svg>
   );
 }

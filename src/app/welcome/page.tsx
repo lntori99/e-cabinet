@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import LauncherHeader from "@/common/launcherHeader";
+import { SITE } from "@/core/app-constants";
 import { CABINET_APPS } from "@/data/apps";
 import { isAuthenticated } from "@/lib/auth";
 import AppTile from "./components/appTile";
@@ -19,7 +20,7 @@ export default async function WelcomePage() {
       {/* Outside the padded container so the bar spans the full width when it
           sticks; the inner container keeps it aligned with the tiles below. */}
       <LauncherHeader current="welcome" />
-      <WelcomeBanner available={available} total={CABINET_APPS.length} />
+      <WelcomeBanner />
 
       <div className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
         <p className="mt-10 text-sm text-gray-500 dark:text-neutral-400">
@@ -31,6 +32,12 @@ export default async function WelcomePage() {
             <AppTile key={app.code} app={app} />
           ))}
         </div>
+
+        <p className="mt-10 text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.18em] text-gray-400 dark:text-neutral-500">
+          {available} of {CABINET_APPS.length} functional areas available in this
+          build
+          <span className="mt-1 block">{SITE.owner}</span>
+        </p>
       </div>
     </section>
   );
