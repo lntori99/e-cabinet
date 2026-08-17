@@ -22,7 +22,7 @@ export default async function WelcomePage() {
       <LauncherHeader current="welcome" />
       <WelcomeBanner />
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <p className="mt-10 text-sm text-gray-500 dark:text-neutral-400">
           Choose a functional area to continue.
         </p>

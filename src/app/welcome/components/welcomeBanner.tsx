@@ -3,21 +3,11 @@ import { FiArrowRight, FiBell, FiCalendar } from "react-icons/fi";
 import { OPERATOR, SITE } from "@/core/app-constants";
 import { seedCentreItems } from "@/data/notifications";
 
-/**
- * The banner above the launcher tiles.
- *
- * The artwork is inline SVG rather than an image: it has to scale to any width,
- * survive a build with no asset pipeline, and sit in a repository that ships no
- * binaries. Blurred shapes over a gradient get close enough to a photographic
- * wash and cost nothing to load.
- */
 export default function WelcomeBanner() {
-  // What is actually waiting on this officer, so the second action carries a
-  // real number rather than a decorative one.
   const outstanding = seedCentreItems.filter((item) => !item.read).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
       <section className="relative isolate overflow-hidden rounded-2xl">
         <BannerArt />
 
