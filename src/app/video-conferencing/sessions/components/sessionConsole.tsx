@@ -36,6 +36,7 @@ import {
   QUALITY_TONE,
   SESSION_TONE,
 } from "../../components/videoStatus";
+import JitsiRoom from "../../components/jitsiRoom";
 
 export default function SessionConsole({ now }: { now: string }) {
   const dispatch = useAppDispatch();
@@ -267,6 +268,8 @@ export default function SessionConsole({ now }: { now: string }) {
               </div>
             </div>
           )}
+
+          <JitsiRoom session={session} />
         </section>
 
         <section className="space-y-3">
