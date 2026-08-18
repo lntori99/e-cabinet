@@ -4,12 +4,7 @@ import DarkModeToggle from "@/common/darkModeToggle";
 import Logo from "@/common/logo";
 import { logoutAction } from "@/lib/auth-actions";
 
-/**
- * The bar above the launcher and the settings screens — the two places that
- * belong to the operator rather than to a functional area, and so have no
- * console sidebar. It stays put while the page scrolls, because sign-out and
- * the way back to the apps should never be somewhere you have to scroll to find.
- */
+
 export default function LauncherHeader({
   current,
 }: {
